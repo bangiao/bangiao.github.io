@@ -182,19 +182,14 @@
 <p>但是这个类没有<code>authenticate</code>函数, 该函数在<code>AbstractUserDetailsAuthenticationProvider</code>抽象类中存在</p>
 <h5 id="先研究AbstractUserDetailsAuthenticationProvider"><a href="#先研究AbstractUserDetailsAuthenticationProvider" class="headerlink" title="先研究AbstractUserDetailsAuthenticationProvider"></a>先研究<code>AbstractUserDetailsAuthenticationProvider</code></h5><ul>
 <li><p><code>userCache</code>是一个用户缓存属性</p>
-<ul>
-<li><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog202211181532270.png" alt="image-20221118153208119"></li>
-<li><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog202211181531224.png" alt="image-20221118153146096"></li>
-</ul>
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog202211181532270.png" alt="image-20221118153208119"><br><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog202211181531224.png" alt="image-20221118153146096"></p>
 </li>
 <li><p><code>hideUserNotFoundExceptions</code>: 是否隐藏用户未找到异常. 如果用户未找到一般情况下会告诉客户说”用户未找到”, 但正常情况下为了安全应该告诉客户”用户名或密码未找到”, 这样不会暴露更多的信息, 而该属性就是这个过程的开关, 从直接抛出<code>UsernameNotFoundException</code>异常改造成使用<code>BadCredentialsException</code>异常</p>
-<ul>
-<li><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog202211181530071.png" alt="image-20221118153022770"></li>
-</ul>
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog202211181530071.png" alt="image-20221118153022770"></p>
 </li>
 <li><p><code>forcePrincipalAsString</code>: 是否强制将 <code>Principal</code> 转化成 <code>String</code>, 默认是 <code>false</code>, 如果设置成 <code>true</code></p>
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog202211181536274.png" alt="image-20221118153621128"></p>
 <ul>
-<li><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog202211181536274.png" alt="image-20221118153621128"></li>
 <li>将会从<code>User</code>对象变成 <code>User</code>对象的 <code>Username</code>字符串</li>
 </ul>
 </li>
@@ -209,76 +204,13 @@
 </ul>
 </li>
 <li><p><code>authenticate</code>这个方法掌握了整个账户密码校验的过程</p>
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog202211181550108.png" alt="image-20221118155010972"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> Authentication <span class="title function_">authenticate</span><span class="params">(Authentication authentication)</span> <span class="keyword">throws</span> AuthenticationException &#123;</span><br><span class="line">    <span class="comment">// 明确用户名, 说白了拿到用户名 authentication.getName()</span></span><br><span class="line">    <span class="type">String</span> <span class="variable">username</span> <span class="operator">=</span> determineUsername(authentication);</span><br><span class="line">    <span class="comment">// 默认缓存已经使用, 所以不需要缓存了</span></span><br><span class="line">    <span class="type">boolean</span> <span class="variable">cacheWasUsed</span> <span class="operator">=</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="comment">// 从缓存中拿 user 对象</span></span><br><span class="line">    <span class="type">UserDetails</span> <span class="variable">user</span> <span class="operator">=</span> <span class="built_in">this</span>.userCache.getUserFromCache(username);</span><br><span class="line">    <span class="comment">// 缓存中没有数据的处理方式</span></span><br><span class="line">    <span class="keyword">if</span> (user == <span class="literal">null</span>) &#123;</span><br><span class="line">        <span class="comment">// 结果缓存中没有数据, 说明需要缓存, 所以改为 false</span></span><br><span class="line">        cacheWasUsed = <span class="literal">false</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">// 拿 user 对象, 还记得前面基于 mybatis 章节的重写的 loadUserByUsername函数么? 就在这里头调用了</span></span><br><span class="line">            user = retrieveUser(username, (UsernamePasswordAuthenticationToken) authentication);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 找不到用户</span></span><br><span class="line">        <span class="keyword">catch</span> (UsernameNotFoundException ex) &#123;</span><br><span class="line">            <span class="built_in">this</span>.logger.debug(<span class="string">&quot;Failed to find user &#x27;&quot;</span> + username + <span class="string">&quot;&#x27;&quot;</span>);</span><br><span class="line">            <span class="comment">// hideUserNotFoundExceptions默认为 true</span></span><br><span class="line">            <span class="comment">// 这里不执行下面抛出的 异常, 这里的异常是 UsernameNotFoundException</span></span><br><span class="line">            <span class="keyword">if</span> (!<span class="built_in">this</span>.hideUserNotFoundExceptions) &#123;</span><br><span class="line">                <span class="keyword">throw</span> ex;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 包装异常类型</span></span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">BadCredentialsException</span>(<span class="built_in">this</span>.messages</span><br><span class="line">                                              .getMessage(<span class="string">&quot;AbstractUserDetailsAuthenticationProvider.badCredentials&quot;</span>, <span class="string">&quot;Bad credentials&quot;</span>));</span><br><span class="line">        &#125;</span><br><span class="line">        Assert.notNull(user, <span class="string">&quot;retrieveUser returned null - a violation of the interface contract&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 缓存中有 user的处理方式</span></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// 缓存中拿到的 user 或者 从 retrieveUser 函数拿出来的 user  再次验证 是否过期, 是否锁定等</span></span><br><span class="line">        <span class="built_in">this</span>.preAuthenticationChecks.check(user);</span><br><span class="line">        <span class="comment">// 使用 passwordEncoder 进行 match 匹配</span></span><br><span class="line">        additionalAuthenticationChecks(user, (UsernamePasswordAuthenticationToken) authentication);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 认证异常</span></span><br><span class="line">    <span class="keyword">catch</span> (AuthenticationException ex) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!cacheWasUsed) &#123;</span><br><span class="line">            <span class="keyword">throw</span> ex;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 如果能走到这里的话</span></span><br><span class="line">        <span class="comment">// 那么就没有从缓存中拿到 user</span></span><br><span class="line">        cacheWasUsed = <span class="literal">false</span>;</span><br><span class="line">        <span class="comment">// 拿到用户</span></span><br><span class="line">        user = retrieveUser(username, (UsernamePasswordAuthenticationToken) authentication);</span><br><span class="line">        <span class="built_in">this</span>.preAuthenticationChecks.check(user);</span><br><span class="line">        additionalAuthenticationChecks(user, (UsernamePasswordAuthenticationToken) authentication);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 检测密码是否过期</span></span><br><span class="line">    <span class="built_in">this</span>.postAuthenticationChecks.check(user);</span><br><span class="line">    <span class="keyword">if</span> (!cacheWasUsed) &#123;</span><br><span class="line">        <span class="comment">// 缓存</span></span><br><span class="line">        <span class="built_in">this</span>.userCache.putUserInCache(user);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">Object</span> <span class="variable">principalToReturn</span> <span class="operator">=</span> user;</span><br><span class="line">    <span class="comment">// 强制将Principal转换成String</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">this</span>.forcePrincipalAsString) &#123;</span><br><span class="line">        principalToReturn = user.getUsername();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 密码校验成功, 将值什么的传递出去, 后续肯定是存储到SecurityHolder了</span></span><br><span class="line">    <span class="keyword">return</span> createSuccessAuthentication(principalToReturn, authentication, user);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog202211182105633.png" alt="image-20221118210500416"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">prepareTimingAttackProtection</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">this</span>.userNotFoundEncodedPassword == <span class="literal">null</span>) &#123;</span><br><span class="line">        <span class="built_in">this</span>.userNotFoundEncodedPassword = <span class="built_in">this</span>.passwordEncoder.encode(USER_NOT_FOUND_PASSWORD);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">mitigateAgainstTimingAttack</span><span class="params">(UsernamePasswordAuthenticationToken authentication)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (authentication.getCredentials() != <span class="literal">null</span>) &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">presentedPassword</span> <span class="operator">=</span> authentication.getCredentials().toString();</span><br><span class="line">        <span class="built_in">this</span>.passwordEncoder.matches(presentedPassword, <span class="built_in">this</span>.userNotFoundEncodedPassword);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <ul>
-<li><p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog202211181550108.png" alt="image-20221118155010972"></p>
-</li>
-<li><pre><code class="java">@Override
-public Authentication authenticate(Authentication authentication) throws AuthenticationException &#123;
-    // 明确用户名, 说白了拿到用户名 authentication.getName()
-    String username = determineUsername(authentication);
-    // 默认缓存已经使用, 所以不需要缓存了
-    boolean cacheWasUsed = true;
-    // 从缓存中拿 user 对象
-    UserDetails user = this.userCache.getUserFromCache(username);
-    // 缓存中没有数据的处理方式
-    if (user == null) &#123;
-        // 结果缓存中没有数据, 说明需要缓存, 所以改为 false
-        cacheWasUsed = false;
-        try &#123;
-            // 拿 user 对象, 还记得前面基于 mybatis 章节的重写的 loadUserByUsername函数么? 就在这里头调用了
-            user = retrieveUser(username, (UsernamePasswordAuthenticationToken) authentication);
-        &#125;
-        // 找不到用户
-        catch (UsernameNotFoundException ex) &#123;
-            this.logger.debug(&quot;Failed to find user &#39;&quot; + username + &quot;&#39;&quot;);
-            // hideUserNotFoundExceptions默认为 true
-            // 这里不执行下面抛出的 异常, 这里的异常是 UsernameNotFoundException
-            if (!this.hideUserNotFoundExceptions) &#123;
-                throw ex;
-            &#125;
-            // 包装异常类型
-            throw new BadCredentialsException(this.messages
-                                              .getMessage(&quot;AbstractUserDetailsAuthenticationProvider.badCredentials&quot;, &quot;Bad credentials&quot;));
-        &#125;
-        Assert.notNull(user, &quot;retrieveUser returned null - a violation of the interface contract&quot;);
-    &#125;
-    // 缓存中有 user的处理方式
-    try &#123;
-        // 缓存中拿到的 user 或者 从 retrieveUser 函数拿出来的 user  再次验证 是否过期, 是否锁定等
-        this.preAuthenticationChecks.check(user);
-        // 使用 passwordEncoder 进行 match 匹配
-        additionalAuthenticationChecks(user, (UsernamePasswordAuthenticationToken) authentication);
-    &#125;
-    // 认证异常
-    catch (AuthenticationException ex) &#123;
-        if (!cacheWasUsed) &#123;
-            throw ex;
-        &#125;
-        // 如果能走到这里的话
-        // 那么就没有从缓存中拿到 user
-        cacheWasUsed = false;
-        // 拿到用户
-        user = retrieveUser(username, (UsernamePasswordAuthenticationToken) authentication);
-        this.preAuthenticationChecks.check(user);
-        additionalAuthenticationChecks(user, (UsernamePasswordAuthenticationToken) authentication);
-    &#125;
-    // 检测密码是否过期
-    this.postAuthenticationChecks.check(user);
-    if (!cacheWasUsed) &#123;
-        // 缓存
-        this.userCache.putUserInCache(user);
-    &#125;
-    Object principalToReturn = user;
-    // 强制将Principal转换成String
-    if (this.forcePrincipalAsString) &#123;
-        principalToReturn = user.getUsername();
-    &#125;
-    // 密码校验成功, 将值什么的传递出去, 后续肯定是存储到SecurityHolder了
-    return createSuccessAuthentication(principalToReturn, authentication, user);
-&#125;
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">- ![image-20221118210500416](https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog202211182105633.png)</span><br><span class="line"></span><br><span class="line">- ```java</span><br><span class="line">  private void prepareTimingAttackProtection() &#123;</span><br><span class="line">      if (this.userNotFoundEncodedPassword == null) &#123;</span><br><span class="line">          this.userNotFoundEncodedPassword = this.passwordEncoder.encode(USER_NOT_FOUND_PASSWORD);</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  private void mitigateAgainstTimingAttack(UsernamePasswordAuthenticationToken authentication) &#123;</span><br><span class="line">      if (authentication.getCredentials() != null) &#123;</span><br><span class="line">          String presentedPassword = authentication.getCredentials().toString();</span><br><span class="line">          this.passwordEncoder.matches(presentedPassword, this.userNotFoundEncodedPassword);</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
-</code></pre>
-</li>
 <li><p>这两段代码如果没有研究透看起来就没啥用, 它的表面功能是在找到不到用户名的时候, 再次对password密码进行验证</p>
 </li>
 <li><p>真正的目的是防止<code>Side-Channel Attack</code>(侧信道攻击), 大意是hacker通过验证和响应的时间来确定用户账户是否存在于数据库中, 因为验证用户和验证用户+密码的时间是不同的, 明显验证用户然后失败的时间较短, 验证用户名和密码的时间较长, 如果验证时间较长说明用户名正确, 数据库中有用户名</p>
