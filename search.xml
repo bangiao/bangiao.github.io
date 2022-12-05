@@ -1239,6 +1239,39 @@
     
     
     <entry>
+      <title>26SpringSecurity-权限模型</title>
+      <link href="/2022/11/29/02springcloud/26SpringSecurity-%E6%9D%83%E9%99%90%E6%A8%A1%E5%9E%8B/"/>
+      <url>/2022/11/29/02springcloud/26SpringSecurity-%E6%9D%83%E9%99%90%E6%A8%A1%E5%9E%8B/</url>
+      
+        <content type="html"><![CDATA[<h1 id="权限模型"><a href="#权限模型" class="headerlink" title="权限模型"></a>权限模型</h1><h2 id="是什么"><a href="#是什么" class="headerlink" title="是什么?"></a>是什么?</h2><p>权限模型是一种指导思想也是一种权限模型, 知道程序员如何开发出高效的, 易于维护的权限管理系统</p><h2 id="常见的权限模型"><a href="#常见的权限模型" class="headerlink" title="常见的权限模型"></a>常见的权限模型</h2><h3 id="DAC"><a href="#DAC" class="headerlink" title="DAC"></a>DAC</h3><p><code>DAC (Discretionary access control）</code>指自主访问控制。它是 <code>Tnusted Computer SystemEvaluation Criteria (TCSEC)</code>定义的一种<strong>访问控制模型</strong>。在这种访问控制模型中，<strong>系统会根据被操作对象的权限控制列表中的信息，来决定当前用户能够对其进行哪些操作</strong>，<strong>用户可以将其具备的权限直接或者间接授予其他用户</strong>，这也是其称为自主访问控制的原因。<br>自主访问控制经常与强制访问控制(MAC）对比。</p><blockquote><p>有点像已拥有权限的用户, 发布邀请码给未注册的用户, 让其注册, 否则没有邀请码无法注册论坛</p></blockquote><h3 id="MAC"><a href="#MAC" class="headerlink" title="MAC"></a>MAC</h3><p><code>MAC (Mandatory access control）</code>指强制访问控制，也叫非自主访问控制。这种访问控制方式可以限制主体对对象或目标执行某种操作的能力。通过强制访问控制，安全策略由安全策略管理员集中控制，用户无权覆盖策略。</p><blockquote><p>这种能力有点像, 小区门禁, 有小区物业统一给予小区业主访问某栋楼的权限</p></blockquote><h3 id="ABAC"><a href="#ABAC" class="headerlink" title="ABAC"></a>ABAC</h3><p><code>ABAC (Attribute-Based Access Control）</code>基于属性的访问控制，有时也被称为<code>PBAC(Policy-Based Access Control）</code>或者<code>CBAC (Claims-Based Access Control)</code>。<br><code>ABAC</code>也被称为下一代权限管理模型。<br>基于属性的访问控制中一般来说包含四类属性:用户属性、环境属性、操作属性以及资源属性，通过动态计算一个或者一组属性是否满足某一条件来进行授权。<br>当然，上面介绍的这三种权限模型并非本章重点，因为我们在Java 企业级开发中很少会用到它们。<br>在企业级开发领域，目前最为流行的权限管理模型当属RBAC。除了<code>RBAC</code>之外，还有一个<code>ACL</code>权限模型，Spring Security 中针对<code>ACL</code>也提供了相关的依赖，所以本章重点介绍这两种权限模型。</p><h2 id="ACL"><a href="#ACL" class="headerlink" title="ACL"></a>ACL</h2><h3 id="是什么-1"><a href="#是什么-1" class="headerlink" title="是什么?"></a>是什么?</h3><p>一种古老的权限访问模型, 该模型针对资源配置权限, 用户&#x2F;角色必须拥有某些权限, 才能够访问某些资源</p><p><code>ACL</code>的一个核心思路就是:<strong>将某个对象的某种权限授予某个用户或某种角色，它们之间的关系是多对多，即一个用户&#x2F;角色可以具备某个对象的多种权限，某个对象的权限也可以被多个用户&#x2F;角色所持有。</strong></p><h3 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h3><p><code>ACL</code>是一种粒度非常细的权限控制，<strong>它可以精确到某一个资源的某一个权限</strong>。这些权限数据都记录在数据库中，这带来的另外一个问题就是需要维护的权限数据量非常庞大，特别是对于一些大型系统而言，这一问题尤其突出，大量的数据需要维护可能会<strong>造成系统性能下降</strong>。</p><h3 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h3><p>对于一些简单的小型系统而言，使用<code>ACL</code>还是可以的，没有任何问题。</p><p>Spring Security对<code>ACL</code>提供了支持, 我们只要导入<code>spring-security-acl</code>依赖, 那么就可以在项目中使用了</p><h3 id="核心概念"><a href="#核心概念" class="headerlink" title="核心概念"></a>核心概念</h3><h4 id="Sid"><a href="#Sid" class="headerlink" title="Sid"></a>Sid</h4><p>Sid表示用户和角色</p><blockquote><p>注意这里是 和 不是 或</p></blockquote><p>它拥有两种:</p><ul><li><code>GrantedAuthoritySid</code>(角色)</li><li><code>PrincipalSid</code>(用户)</li></ul><h2 id="RBAC"><a href="#RBAC" class="headerlink" title="RBAC"></a>RBAC</h2>]]></content>
+      
+      
+      <categories>
+          
+          <category> springcloud </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 过滤器 </tag>
+            
+            <tag> 权限 </tag>
+            
+            <tag> SpringSecurity </tag>
+            
+            <tag> 源码分析 </tag>
+            
+            <tag> 权限模型 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>25SpringSecurity-权限管理</title>
       <link href="/2022/11/29/02springcloud/25SpringSecurity-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/"/>
       <url>/2022/11/29/02springcloud/25SpringSecurity-%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/</url>
