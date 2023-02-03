@@ -1,0 +1,358 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="description" content="27SpringSecurity-OAuth认证"><meta name="keywords" content="过滤器,springsecurity,角色,源码分析,权限,用户,资源,OAuth,OAuth2,OAuth认证,github授权认证,gitee授权认证"><meta name="author" content="Bangiao"><meta name="copyright" content="Bangiao"><title>27SpringSecurity-OAuth认证 | Bangiao's Notebooks</title><link rel="shortcut icon" href="/melody-favicon.ico"><link rel="stylesheet" href="/css/index.css?version=1.9.1"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@latest/css/font-awesome.min.css?version=1.9.1"><meta name="format-detection" content="telephone=no"><meta http-equiv="x-dns-prefetch-control" content="on"><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"We didn't find any results for the search: ${query}"}},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  hexoVersion: '6.3.0'
+} </script><meta name="generator" content="Hexo 6.3.0"></head><body><canvas class="fireworks"></canvas><i class="fa fa-arrow-right" id="toggle-sidebar" aria-hidden="true"></i><div id="sidebar" data-display="true"><div class="toggle-sidebar-info text-center"><span data-toggle="Toggle article">Toggle site</span><hr></div><div class="sidebar-toc"><div class="sidebar-toc__title">Catalog</div><div class="sidebar-toc__progress"><span class="progress-notice">You've read</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar"></div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#OAuth2%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">OAuth2简介</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-number">1.1.</span> <span class="toc-text">是什么?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%A4%E7%89%8C%E4%B8%8E%E5%AF%86%E7%A0%81%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">1.2.</span> <span class="toc-text">令牌与密码的区别</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9B%9B%E7%A7%8D%E6%8E%88%E6%9D%83%E6%A8%A1%E5%BC%8F"><span class="toc-number">2.</span> <span class="toc-text">四种授权模式</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E7%A7%8D%E6%8E%88%E6%9D%83%E6%96%B9%E5%BC%8F%EF%BC%9A%E6%8E%88%E6%9D%83%E7%A0%81"><span class="toc-number">2.1.</span> <span class="toc-text">第一种授权方式：授权码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E7%A7%8D%E6%96%B9%E5%BC%8F%EF%BC%9A%E9%9A%90%E8%97%8F%E5%BC%8F-%E7%AE%80%E5%8C%96%E6%A8%A1%E5%BC%8F"><span class="toc-number">2.2.</span> <span class="toc-text">第二种方式：隐藏式(简化模式)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E7%A7%8D%E6%96%B9%E5%BC%8F%EF%BC%9A%E5%AF%86%E7%A0%81%E5%BC%8F"><span class="toc-number">2.3.</span> <span class="toc-text">第三种方式：密码式</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Gitee%E6%8E%88%E6%9D%83%E7%99%BB%E5%BD%95"><span class="toc-number">3.</span> <span class="toc-text">Gitee授权登录</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Gitee-%E7%BD%91%E7%AB%99%E4%B8%8A%E9%85%8D%E7%BD%AE"><span class="toc-number">3.1.</span> <span class="toc-text">Gitee 网站上配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE%E9%85%8D%E7%BD%AE"><span class="toc-number">3.2.</span> <span class="toc-text">项目配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%95%E5%B1%82%E9%83%BD%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="toc-number">3.3.</span> <span class="toc-text">底层都做了什么?</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E5%AE%9A%E5%90%91%E8%BF%87%E7%A8%8B"><span class="toc-number">3.3.1.</span> <span class="toc-text">重定向过程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96code%E5%B9%B6%E8%AE%BF%E9%97%AE%E8%8E%B7%E5%8F%96token%E5%92%8C%E7%94%A8%E6%88%B7%E4%BF%A1%E6%81%AF%E5%9C%B0%E5%9D%80%E7%9A%84%E8%BF%87%E7%A8%8B"><span class="toc-number">3.3.2.</span> <span class="toc-text">获取code并访问获取token和用户信息地址的过程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E9%85%8D%E7%BD%AE"><span class="toc-number">3.4.</span> <span class="toc-text">自定义配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89ClientRegistrationRepository"><span class="toc-number">3.4.1.</span> <span class="toc-text">自定义ClientRegistrationRepository</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E7%94%A8%E6%88%B7"><span class="toc-number">3.4.2.</span> <span class="toc-text">自定义用户</span></a></li></ol></li></ol></li></ol></div></div><div class="author-info hide"><div class="author-info__avatar text-center"><img src="https://imgsa.baidu.com/forum/pic/item/c8179682d158ccbf63dc944d1bd8bc3eb03541a9.jpg"></div><div class="author-info__name text-center">Bangiao</div><div class="author-info__description text-center"></div><div class="follow-button"><a target="_blank" rel="noopener" href="https://github.com/bangiao">Follow Me</a></div><hr><div class="author-info-articles"><a class="author-info-articles__archives article-meta" href="/archives"><span class="pull-left">Articles</span><span class="pull-right">72</span></a><a class="author-info-articles__tags article-meta" href="/tags"><span class="pull-left">Tags</span><span class="pull-right">638</span></a><a class="author-info-articles__categories article-meta" href="/categories"><span class="pull-left">Categories</span><span class="pull-right">7</span></a></div><hr><div class="author-info-links"><div class="author-info-links__title text-center">我的博客</div><a class="author-info-links__name text-center" target="_blank" rel="noopener" href="https://juejin.cn/user/4248168662314823">掘金</a><a class="author-info-links__name text-center" target="_blank" rel="noopener" href="https://blog.csdn.net/qq_30690165">CSDN</a><a class="author-info-links__name text-center" target="_blank" rel="noopener" href="https://www.cnblogs.com/bangiao/">博客园</a><a class="author-info-links__name text-center" target="_blank" rel="noopener" href="https://gitee.com/bangiao_admin/projects">Gitee笔记源码</a></div></div></div><div id="content-outer"><div class="no-bg" id="top-container"><div id="page-header"><span class="pull-left"> <a id="site-name" href="/">Bangiao's Notebooks</a></span><i class="fa fa-bars toggle-menu pull-right" aria-hidden="true"></i><span class="pull-right menus">   <a class="site-page" href="/">首页</a><a class="site-page" href="/archives">文章列表</a><a class="site-page" href="/tags">文章标签</a><a class="site-page" href="/categories">文章分类</a><a class="site-page" href="/sources">笔记源码</a><a class="site-page" href="/about">关于</a></span><span class="pull-right"><a class="site-page social-icon search"><i class="fa fa-search"></i><span> Search</span></a></span></div><div id="post-info"><div id="post-title">27SpringSecurity-OAuth认证</div><div id="post-meta"><time class="post-meta__date"><i class="fa fa-calendar" aria-hidden="true"></i> 2022-12-06</time><span class="post-meta__separator">|</span><i class="fa fa-inbox post-meta__icon" aria-hidden="true"></i><a class="post-meta__categories" href="/categories/springcloud/">springcloud</a></div></div></div><div class="layout" id="content-inner"><article id="post"><div class="article-container" id="post-content"><h1 id="OAuth2简介"><a href="#OAuth2简介" class="headerlink" title="OAuth2简介"></a>OAuth2简介</h1><h2 id="是什么"><a href="#是什么" class="headerlink" title="是什么?"></a>是什么?</h2><p><strong>是目前最流行的授权机制，用来授权第三方应用，获取用户数据。</strong></p>
+<p><strong>简单说，OAuth 就是一种授权机制。数据的所有者告诉系统，同意授权第三方应用进入系统，获取这些数据。系统从而产生一个短期的进入令牌（token），用来代替密码，供第三方应用使用。</strong></p>
+<blockquote>
+<p>qq授权登录, 微信授权登录, 微博授权登录, github授权登录等</p>
+<p>以上这是都是它的落地实现</p>
+</blockquote>
+<p>举个例子:</p>
+<p>用户想通过QQ登录头条，那么头条就需要qq的账号密码, 这是不行的, 所以需要另外一种授权机制, 在qq的网站上登录, 然后告知头条部分数据(至少告知头条我这里登录成功了<code>token</code>), 这样头条就根据qq授权返回的信息登录头条, 等到下次, 再次访问头条后, 头条使用<code>token</code>代替qq的账号密码方式登录(一般不需要再次登录了, 只要验证<code>token</code>过期了没有)</p>
+<blockquote>
+<p>这里讲到了 <code>token</code> , <code>token</code>一般是有过期时间的, 并且通过 <code>token</code> 能够拿到权限列表</p>
+</blockquote>
+<h2 id="令牌与密码的区别"><a href="#令牌与密码的区别" class="headerlink" title="令牌与密码的区别"></a>令牌与密码的区别</h2><p>令牌（token）与密码（password）的作用是一样的，都可以进入系统，但是有三点差异。</p>
+<p>（1）<strong>令牌是短期的，到期会自动失效，用户自己无法修改。</strong>密码一般长期有效，用户不修改，就不会发生变化。</p>
+<p>（2）<strong>令牌可以被数据所有者撤销，会立即失效。</strong>以上例而言，屋主可以随时取消快递员的令牌。密码一般不允许被他人撤销。</p>
+<p>（3）<strong>令牌有权限范围（scope），比如只能进小区的二号门。</strong>对于网络服务来说，只读令牌就比读写令牌更安全。密码一般是完整权限。</p>
+<p>上面这些设计，保证了令牌既可以让第三方应用获得权限，同时又随时可控，不会危及系统安全。这就是 OAuth 2.0 的优点。</p>
+<p>注意，只要知道了令牌，就能进入系统。系统一般不会再次确认身份，所以<strong>令牌必须保密，泄漏令牌与泄漏密码的后果是一样的。</strong> 这也是为什么令牌的有效期，一般都设置得很短的原因。</p>
+<p>OAuth 2.0 对于如何颁发令牌的细节，规定得非常详细。具体来说，一共分成四种授权类型（authorization grant），即四种颁发令牌的方式，适用于不同的互联网场景。</p>
+<blockquote>
+<p>所以也需要关注到token的安全问题, 不要泄漏了, 不然就危险了</p>
+</blockquote>
+<blockquote>
+<p><strong>OAuth 的核心就是向第三方应用颁发令牌。</strong></p>
+</blockquote>
+<h1 id="四种授权模式"><a href="#四种授权模式" class="headerlink" title="四种授权模式"></a>四种授权模式</h1><ul>
+<li>授权码（authorization-code）</li>
+<li>隐藏式（implicit）</li>
+<li>密码式（password）</li>
+<li>客户端凭证（client credentials）</li>
+</ul>
+<blockquote>
+<p>不管哪一种授权方式，第三方应用申请令牌之前，都必须先到系统备案，说明自己的身份，然后会拿到两个身份识别码：<code>客户端 ID（client ID）</code>和<code>客户端密钥（client secret）</code>。<strong>这是为了防止令牌被滥用，没有备案过的第三方应用，是不会拿到令牌的。</strong></p>
+</blockquote>
+<blockquote>
+<p>如果你做过微信授权登录一定会熟悉这个流程</p>
+</blockquote>
+<h2 id="第一种授权方式：授权码"><a href="#第一种授权方式：授权码" class="headerlink" title="第一种授权方式：授权码"></a>第一种授权方式：授权码</h2><p><strong>授权码（authorization code）方式，指的是第三方应用先申请一个授权码，然后再用该码获取令牌。</strong></p>
+<p>下面以博客使用qq授权登录的过程为例</p>
+<blockquote>
+<p>里面的qq网址不对应实际qq网址</p>
+<p>下面才是qq授权的实际网址</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://graph.qq.com/oauth2.0/show?<span class="built_in">which</span>=Login&amp;display=pc&amp;response_type=code&amp;client_id=112233445&amp;redirect_uri=https%3A%2F%2Fwww.52pojie.cn%2Fconnect.php%3Fmod%3Dlogin%26op%3Dcallback%26referer%3Dindex.php&amp;state=6d9aaa4d7b6777779d1a36b76c2ddddd&amp;scope=get_user_info%2Cadd_share%2Cadd_t%2Cadd_pic_t%2Cget_repost_list</span><br></pre></td></tr></table></figure>
+</blockquote>
+<ol>
+<li><p>博客提供一个网址给用户, 网址内容: </p>
+<ol>
+<li>&#96;&#96;&#96;html<br><a target="_blank" rel="noopener" href="https://qq.com/oauth/authorize">https://qq.com/oauth/authorize</a>?<br>  response_type&#x3D;code&amp;<br>  client_id&#x3D;CLIENT_ID&amp;<br>  redirect_uri&#x3D;CALLBACK_URL&amp;<br>  scope&#x3D;read<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">2. `response_type`: 告知服务端返回类型, 只能是 `code` 或者`token`, 如果是`code` 表明**采用授权码认证模式**</span><br><span class="line"></span><br><span class="line">3. `client_id`：因为认证服务器要知道是哪一个应用在请求授权，所以`client_id`就是**认证服务器给每个应用分配的id**</span><br><span class="line"></span><br><span class="line">4. `scope`：需要获得哪些授权，这个参数的值是由服务提供商定义的，不能随意填写, 这是只是只读</span><br><span class="line"></span><br><span class="line">5. `redirect_uri`：重定向地址, 这里是我们博客的地址, 而且会在博客地址后面添加授权码，让博客获取`code`授权码, 所以这里应该填写我们博客获得`code`的请求地址, 假设地址是: </span><br><span class="line"></span><br><span class="line">   1. ```http</span><br><span class="line">      https://blog.com/callback?code=到时候qq那边给你填写code的具体值</span><br></pre></td></tr></table></figure></li>
+</ol>
+</li>
+<li><p>用户使用qq的账号密码在qq的授权网址上登录</p>
+</li>
+<li><p>qq授权用户返回 <code>code</code> 代码, 添加到上面的 <code>redirect_uri</code>地址后面<a target="_blank" rel="noopener" href="https://blog.com/callback?code=AUTHORIZATION_CODE">https://blog.com/callback?code=AUTHORIZATION_CODE</a> , 然后重定向到我们的博客网站上面</p>
+</li>
+<li><p>博客服务器收到 code 授权码后, 请求新的请求去拿到 <code>token</code></p>
+<ol>
+<li>&#96;&#96;&#96;html<br><a target="_blank" rel="noopener" href="https://qq.com/oauth/token">https://qq.com/oauth/token</a>?<br> client_id&#x3D;CLIENT_ID&amp;<br> client_secret&#x3D;CLIENT_SECRET&amp;<br> grant_type&#x3D;authorization_code&amp;<br> code&#x3D;AUTHORIZATION_CODE&amp;<br> redirect_uri&#x3D;CALLBACK_URL<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">2. 博客带着在qq上申请到的`client_id`和`client_secret`, `client_secret`就是认证服务器给 `client_id` 分配的密钥, 让认证服务器知道是我们博客正在接收认证</span><br><span class="line"></span><br><span class="line">3. `grant_type`：授权类型，授权码模式默认为 `authorization_code`</span><br><span class="line"></span><br><span class="line">4. `code`：授权码(一次失效), 前一次请求获得的`code`, 这次带上 `code` 去拿到 `token`</span><br><span class="line"></span><br><span class="line">5. `redirect_uri`: 还是回调地址, 这次给你传递的 `token` 以及一些失效信息等数据</span><br><span class="line"></span><br><span class="line">   1. ```json</span><br><span class="line">      &#123;    </span><br><span class="line">        &quot;access_token&quot;:&quot;ACCESS_TOKEN&quot;,</span><br><span class="line">        &quot;token_type&quot;:&quot;bearer&quot;,</span><br><span class="line">        &quot;expires_in&quot;:2592000,</span><br><span class="line">        &quot;refresh_token&quot;:&quot;REFRESH_TOKEN&quot;,</span><br><span class="line">        &quot;scope&quot;:&quot;read&quot;,</span><br><span class="line">        &quot;uid&quot;:100101</span><br><span class="line">      &#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+</li>
+</ol>
+<blockquote>
+<ol>
+<li><p>上面的 <code>client_id</code> 和 <code>client_secret</code> 都需要去qq那边申请, 那边可能把<code>client_id</code>叫做 <code>AppId</code>等</p>
+</li>
+<li><p>获得授权 <code>code</code> 和 <code>token</code> 这两地址中可能还有其他参数, 比如 <code>csrf</code> 哪种校验码等</p>
+</li>
+<li><p>第二步获得 <code>token</code> 的过程, 是客户端在后台自动发送的, 对用户不可见</p>
+</li>
+</ol>
+</blockquote>
+<h2 id="第二种方式：隐藏式-简化模式"><a href="#第二种方式：隐藏式-简化模式" class="headerlink" title="第二种方式：隐藏式(简化模式)"></a>第二种方式：隐藏式(简化模式)</h2><p>有些 Web 应用是纯前端应用，没有后端。这时就不能用上面的方式了，必须将令牌储存在前端。<strong>RFC 6749 就规定了第二种方式，允许直接向前端颁发令牌。这种方式没有授权码这个中间步骤，所以称为（授权码）”隐藏式”（implicit）。</strong></p>
+<blockquote>
+<p>现在程序员搭建博客网站都流行静态网站，例如Hexo、Jekyll等，这类技术栈有一个共同的特点就是没有后端，开发者不需要将精力放在维护后端网站上，只需要专注于内容创作即可。</p>
+</blockquote>
+<p>流程</p>
+<ol>
+<li><p>博客网站上有一个 github 的授权登录按钮, 地址</p>
+<ol>
+<li><pre><code class="sh">https://github.com/oauth/authorize?
+  response_type=token&amp;
+  client_id=CLIENT_ID&amp;
+  redirect_uri=CALLBACK_URL&amp;
+  scope=read&amp;
+  _csrf=111
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">   2. 基本上和授权码方式一致, 除了 `response_type=token`, 表示直接从授权服务器直接拿 `Access token`, 少了授权码的过程</span><br><span class="line"></span><br><span class="line">2. 用户点击按钮, 跳转到 github, 让用户登录授权, 接着会跳转到 `redirect_uri`的地址, 地址详情大概是这样</span><br><span class="line"></span><br><span class="line">   1. ```sh</span><br><span class="line">      https://blog.com/callback#access_token=xxxxxxxxxxxx&amp;token_type=bearer&amp;expires_in=9999&amp;_csrf=xxx</span><br></pre></td></tr></table></figure>
+</code></pre>
+</li>
+<li><p>令牌的位置是 URL 锚点（fragment），而不是查询字符串（querystring），这是因为 OAuth 2.0 允许跳转网址是 HTTP 协议，因此存在”中间人攻击”的风险，而浏览器跳转时，锚点不会发到服务器，就减少了泄漏令牌的风险。</p>
+</li>
+</ol>
+</li>
+<li><p>接下来客户端向资源服务器发送请求，这个请求不需要携带令牌，资源服务器返回一段JS脚本，客户端执行JS脚本，提取出令牌Access Token。</p>
+</li>
+</ol>
+<blockquote>
+<p>这种方式把令牌直接传给前端，是很不安全的。因此，只能用于一些安全要求不高的场景，并且令牌的有效期必须非常短，通常就是会话期间（session）有效，浏览器关掉，令牌就失效了。</p>
+</blockquote>
+<h2 id="第三种方式：密码式"><a href="#第三种方式：密码式" class="headerlink" title="第三种方式：密码式"></a>第三种方式：密码式</h2><p><strong>如果你高度信任某个应用，RFC 6749 也允许用户把用户名和密码，直接告诉该应用。该应用就使用你的密码，申请令牌，这种方式称为”密码式”（password）。</strong></p>
+<p>密码模式的流程比较简单:</p>
+<ol>
+<li><p>首先用户在第三方应用的登录页面输入登录凭证（用户名&#x2F;密码)</p>
+<ol>
+<li>&#96;&#96;&#96;sh<br><a target="_blank" rel="noopener" href="https://oauth.qq.com/token">https://oauth.qq.com/token</a>?<br>  grant_type&#x3D;password&amp;<br>  username&#x3D;USERNAME&amp;<br>  password&#x3D;PASSWORD&amp;<br>  client_id&#x3D;CLIENT_ID<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">2. 第三方应用将用户的登录信息发送给授权服务器，获取到令牌Access Token</span><br><span class="line"></span><br><span class="line">3. 授权服务器检查用户的登录信息,如果没有问题,授权服务器以JSON的格式发送令牌Access Token给第三方应用</span><br><span class="line"></span><br><span class="line">## 第四种方式：凭证式</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">**最后一种方式是凭证式（client credentials），适用于没有前端的命令行应用，即在命令行下请求令牌。**</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">流程:</span><br><span class="line"></span><br><span class="line">1. 客户端发送一个请求到授权服务器</span><br><span class="line"></span><br><span class="line">   1. ```sh</span><br><span class="line">      https://oauth.b.com/token?</span><br><span class="line">        grant_type=client_credentials&amp;</span><br><span class="line">        client_id=CLIENT_ID&amp;</span><br><span class="line">        client_secret=CLIENT_SECRET</span><br></pre></td></tr></table></figure></li>
+</ol>
+</li>
+<li><p>授权服务器验证通过后，会直接返回Access Token给客户端</p>
+</li>
+</ol>
+<blockquote>
+<p>这种方式给出的令牌，是针对客户端使用的，而不是针对用户，即有可能多个用户共享同一个令牌。</p>
+</blockquote>
+<h1 id="Gitee授权登录"><a href="#Gitee授权登录" class="headerlink" title="Gitee授权登录"></a>Gitee授权登录</h1><blockquote>
+<p>说句实话，国内不建议使用<code>github</code>学习<code>OAuth</code>授权认证, 因为墙问题, 需要梯子</p>
+<p>如果你没没有使用梯子。而是使用fast git或者是别的这种工具。那么可能存在<code>SSL</code>安全问题。这一点值得注意。</p>
+<p>推荐国内使用码云。</p>
+<p><strong>别问我怎么知道的哦!!!</strong></p>
+</blockquote>
+<h2 id="Gitee-网站上配置"><a href="#Gitee-网站上配置" class="headerlink" title="Gitee 网站上配置"></a><code>Gitee</code> 网站上配置</h2><p><img src="https://gcore.jsdelivr.net/gh/bangiao/blog_images@main/blog/202212090125317.png" alt="image-20221208214353037"></p>
+<p>从这个地方入手, 配置好</p>
+<p><img src="https://gcore.jsdelivr.net/gh/bangiao/blog_images@main/blog/202212090125318.png" alt="image-20221208214439247"></p>
+<p><img src="https://gcore.jsdelivr.net/gh/bangiao/blog_images@main/blog/202212090125319.png" alt="image-20221208214458877"></p>
+<h2 id="项目配置"><a href="#项目配置" class="headerlink" title="项目配置"></a>项目配置</h2><p>导入依赖</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-web<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-devtools<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">scope</span>&gt;</span>provided<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.projectlombok<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>lombok<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">scope</span>&gt;</span>provided<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-actuator<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-test<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">scope</span>&gt;</span>test<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-oauth2-client<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-oauth2-resource-server<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-security<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.security<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-security-test<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">scope</span>&gt;</span>test<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RestController</span></span><br><span class="line"><span class="meta">@Slf4j</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">HelloController</span> &#123;</span><br><span class="line">	</span><br><span class="line">	<span class="meta">@GetMapping(&quot;hello&quot;)</span></span><br><span class="line">	<span class="keyword">public</span> String <span class="title function_">hello</span><span class="params">(Principal principal)</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="string">&quot;hello, &quot;</span> + principal.getName();</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spring:</span></span><br><span class="line">  <span class="attr">security:</span></span><br><span class="line">    <span class="attr">user:</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">zhazha</span></span><br><span class="line">      <span class="attr">password:</span> <span class="string">&#x27;&#123;noop&#125;123456&#x27;</span></span><br><span class="line">    <span class="attr">oauth2:</span></span><br><span class="line">      <span class="attr">client:</span></span><br><span class="line">        <span class="attr">registration:</span></span><br><span class="line">          <span class="attr">gitee:</span></span><br><span class="line">            <span class="attr">client-name:</span> <span class="string">Gitee</span></span><br><span class="line">            <span class="attr">client-id:</span> <span class="string">b9xxxxxxxxxxxxxxxxxxxxxxx</span></span><br><span class="line">            <span class="attr">client-secret:</span> <span class="string">61xxxxxxxxxxxxxxxxxxx</span></span><br><span class="line">            <span class="attr">authorization-grant-type:</span> <span class="string">authorization_code</span></span><br><span class="line">            <span class="attr">redirect-uri:</span> <span class="string">&#x27;&#123;baseUrl&#125;/login/oauth2/code/&#123;registrationId&#125;&#x27;</span></span><br><span class="line">            <span class="attr">scope:</span></span><br><span class="line">              <span class="bullet">-</span> <span class="string">user_info</span></span><br><span class="line">          <span class="attr">github:</span></span><br><span class="line">            <span class="attr">client-id:</span> <span class="string">efxxxxxxxxxxxxxxxx</span></span><br><span class="line">            <span class="attr">client-secret:</span> <span class="string">20xxxxxxxxxxxxxxxxxxxxxxxxxx</span></span><br><span class="line">        <span class="attr">provider:</span></span><br><span class="line">          <span class="attr">gitee:</span></span><br><span class="line">            <span class="attr">authorization-uri:</span> <span class="string">https://gitee.com/oauth/authorize</span></span><br><span class="line">            <span class="attr">token-uri:</span> <span class="string">https://gitee.com/oauth/token</span></span><br><span class="line">            <span class="attr">user-info-uri:</span> <span class="string">https://gitee.com/api/v5/user</span></span><br><span class="line">            <span class="attr">user-name-attribute:</span> <span class="string">name</span></span><br></pre></td></tr></table></figure>
+
+
+
+<blockquote>
+<p>上面这些<code>gitee</code>地址可以从<code>gitee</code>网址拿到: </p>
+<p><a target="_blank" rel="noopener" href="https://gitee.com/api/v5/swagger#/getV5User">Gitee API 文档</a></p>
+<p><a target="_blank" rel="noopener" href="https://gitee.com/api/v5/oauth_doc#/">Gitee OAuth 文档</a></p>
+</blockquote>
+<blockquote>
+<p>这里有很多相关配置:</p>
+<table>
+<thead>
+<tr>
+<th><code>spring.security.oauth2.client.registration.[registrationId]</code></th>
+<th><code>registrationId</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>spring.security.oauth2.client.registration.[registrationId].client-id</code></td>
+<td><code>clientId</code></td>
+</tr>
+<tr>
+<td><code>spring.security.oauth2.client.registration.[registrationId].client-secret</code></td>
+<td><code>clientSecret</code></td>
+</tr>
+<tr>
+<td><code>spring.security.oauth2.client.registration.[registrationId].client-authentication-method</code></td>
+<td><code>clientAuthenticationMethod</code></td>
+</tr>
+<tr>
+<td><code>spring.security.oauth2.client.registration.[registrationId].authorization-grant-type</code></td>
+<td><code>authorizationGrantType</code></td>
+</tr>
+<tr>
+<td><code>spring.security.oauth2.client.registration.[registrationId].redirect-uri</code></td>
+<td><code>redirectUri</code></td>
+</tr>
+<tr>
+<td><code>spring.security.oauth2.client.registration.[registrationId].scope</code></td>
+<td><code>scopes</code></td>
+</tr>
+<tr>
+<td><code>spring.security.oauth2.client.registration.[registrationId].client-name</code></td>
+<td><code>clientName</code></td>
+</tr>
+<tr>
+<td><code>spring.security.oauth2.client.provider.[providerId].authorization-uri</code></td>
+<td><code>providerDetails.authorizationUri</code></td>
+</tr>
+<tr>
+<td><code>spring.security.oauth2.client.provider.[providerId].token-uri</code></td>
+<td><code>providerDetails.tokenUri</code></td>
+</tr>
+<tr>
+<td><code>spring.security.oauth2.client.provider.[providerId].jwk-set-uri</code></td>
+<td><code>providerDetails.jwkSetUri</code></td>
+</tr>
+<tr>
+<td><code>spring.security.oauth2.client.provider.[providerId].issuer-uri</code></td>
+<td><code>providerDetails.issuerUri</code></td>
+</tr>
+<tr>
+<td><code>spring.security.oauth2.client.provider.[providerId].user-info-uri</code></td>
+<td><code>providerDetails.userInfoEndpoint.uri</code></td>
+</tr>
+<tr>
+<td><code>spring.security.oauth2.client.provider.[providerId].user-info-authentication-method</code></td>
+<td><code>providerDetails.userInfoEndpoint.authenticationMethod</code></td>
+</tr>
+<tr>
+<td><code>spring.security.oauth2.client.provider.[providerId].user-name-attribute</code></td>
+<td><code>providerDetails.userInfoEndpoint.userNameAttributeName</code></td>
+</tr>
+</tbody></table>
+</blockquote>
+<blockquote>
+<p>当你在看官方案例或者网上其他案例时会发现他们可以直接使用 <code>facebook</code> 和 <code>github</code> 的配置, 为什么呢? </p>
+<p>因为他有默认配置<code>CommonOAuth2Provider</code>, 配置了<code>GOOGLE</code>, <code>GITHUB</code>, <code>FACEBOOK</code>和<code>OKTA</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">GITHUB &#123;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> Builder <span class="title function_">getBuilder</span><span class="params">(String registrationId)</span> &#123;</span><br><span class="line">   ClientRegistration.<span class="type">Builder</span> <span class="variable">builder</span> <span class="operator">=</span> getBuilder(registrationId,</span><br><span class="line">         ClientAuthenticationMethod.CLIENT_SECRET_BASIC, DEFAULT_REDIRECT_URL);</span><br><span class="line">   builder.scope(<span class="string">&quot;read:user&quot;</span>);</span><br><span class="line">   builder.authorizationUri(<span class="string">&quot;https://github.com/login/oauth/authorize&quot;</span>);</span><br><span class="line">   builder.tokenUri(<span class="string">&quot;https://github.com/login/oauth/access_token&quot;</span>);</span><br><span class="line">   builder.userInfoUri(<span class="string">&quot;https://api.github.com/user&quot;</span>);</span><br><span class="line">   builder.userNameAttributeName(<span class="string">&quot;id&quot;</span>);</span><br><span class="line">   builder.clientName(<span class="string">&quot;GitHub&quot;</span>);</span><br><span class="line">   <span class="keyword">return</span> builder;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p>直接访问 任意地址 会重定向到 <code>gitee</code> 地址:</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://gitee.com/login?redirect_to_url=https%3A%2F%2Fgitee.com%2Foauth%2Fauthorize%3Fresponse_type%3Dcode%26client_id%3Db99c3b81431764f6402e8a7ef90d15da5ccb1c657189bf4341b03f85c781082a%26scope%3Duser_info%26state%3DXOo_-t69onp4wXJLzNLQII9vtnhpXhTFIEgtZmKQGkI%253D%26redirect_uri%3Dhttp%3A%2F%2Flocalhost%3A8080%2Fcallback</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="https://gcore.jsdelivr.net/gh/bangiao/blog_images@main/blog/202301210133832.png" alt="image-20230121012531377"></p>
+<blockquote>
+<p>踩坑: 如果你设置了 <code>FastGit</code> 之类的工具, 可能导致 <code>Github SSL</code> 报错, 在认证的时候需要关闭改功能</p>
+</blockquote>
+<h2 id="底层都做了什么"><a href="#底层都做了什么" class="headerlink" title="底层都做了什么?"></a>底层都做了什么?</h2><p>首先回忆下<code>OAuth2</code>认证的过程, 大体上是跳转, 获取code, 获取token</p>
+<ol>
+<li>跳转, 用户点击使用<code>gitee</code>登录, 浏览器跳转到 <code>gitee OAuth</code>网址</li>
+<li>获取<code>code</code>,</li>
+</ol>
+<p><img src="https://gcore.jsdelivr.net/gh/bangiao/blog_images@main/blog/202212090125320.png" alt="image-20221209011427525"></p>
+<p>在第一个过程中, 客户端发送了三个参数, 然后授权服务器验证成功借助客户端发送的redirect_uri携带 code 参数返回给客户端</p>
+<p><img src="https://gcore.jsdelivr.net/gh/bangiao/blog_images@main/blog/202212090125321.png" alt="image-20221209012226362"></p>
+<p>第二步将上面几个参数一起传递给授权服务器, 其中<code>client-secret</code>参数和<code>client-id</code>参数需要事先去授权服务器创建第三方APP</p>
+<blockquote>
+<p>一般这个请求由客户端内部自主请求, 用户不会在浏览器看到请求 <code>access_token</code> 的过程</p>
+</blockquote>
+<h3 id="重定向过程"><a href="#重定向过程" class="headerlink" title="重定向过程"></a>重定向过程</h3><blockquote>
+<p>小白: “这里的源码好像很复杂, 我要怎么分析?”</p>
+<p>小黑: “分析源代码不能盲目查看，而是先要确定目标。你可以给出一些目标。”</p>
+<p>小白: “ <code>OAuth</code>认证也是认证的一个过程。在最终也是需要返回<code>Authentication</code>, 但是<code>OAuth</code>认证的<code>authentication</code>有一些独特的地方。”</p>
+<p>小白: “比如说获取用户名。这里面<code>OAuth</code>认证里面所有的用户信息全部都是从各个不同的支持<code>OAuth</code>认证的授权服务器上获取的。所以在<code>authentication</code>里面可能会存在<code>map</code>结构。这个<code>map</code>这个说白了就是各个授权服务器上的用户信息。”</p>
+<p>小白: “不同的授权服务器有不同的结构。这个map结构其实是一个妥协”</p>
+<p>小白: “紧接着由于是<code>OAuth</code>认证，所以它有独特的<code>access token</code>机制和<code>refresh token</code>机制。所以我们需要有另外一个地方去保存这两个属性。最好是数据库等等。”</p>
+<p>小白: “所以可以很明显的发现，我们需要如下步骤。”</p>
+<p>小白: “第1个步骤是想办法从授权服务器获得<code>code</code>代码。这个步骤的目的主要是让服务器知道，你拥有获取<code>access token</code>和<code>refresh token</code>的权限, 当然这中间还需要而另外两个属性<code>clientId</code>跟<code>clientSecret</code>“</p>
+<p>小白: “第2步是想办法从授权服务器拿到<code>access token</code>和 <code>refresh token</code>.(有些授权服务器没有<code>refresh token</code>不过没有关系。), 这个步骤主要是让 Spring security 知道自己已经认证，并且如果在<code>access token</code>过期时可以借助refresh token，刷新<code>access token</code>。”</p>
+<p>小白: “第3步是想办法从授权服务器拿到用户信息。这个步骤主要就是这个用于存储<code>SecurityContextHolder</code>上下文的。”</p>
+</blockquote>
+<blockquote>
+<p>小黑: “我们配置<code>oauth</code>认证的整个过程。首先我们需要在记载上配置好我们的网页地址和回调地址。并配置好需要提供的权限。这一部基本上没有什么源码分析。”</p>
+<p>小黑: “接着我们的最终目的是什么？是拿到服务端或者说是授权服务器的<code>token</code>。如果是<code>OAuth</code>的授权码模式的话。过程比较复杂。需要<code>clientId</code>跟<code>clientSecret</code>。”</p>
+<p>小黑: “我们的第1步是想要拿到code。也就是授权服务器提供的一个code代码。”</p>
+<p>小黑: “那我们在我们的服务器端就要组合一个授权端的网页地址。服务端通过这个地址就能够拿到授权端的code代码。”</p>
+<p>小白: “那授权端凭什么平白无故的给你一段code代码，让你去访问他的资源呢?”</p>
+<p>小黑: “所以服务端需要事先去授权端注册登录并拿到两个编码<code>clientId</code>跟<code>clientSecret</code>, 这个编码的作用是告知授权端我的身份，我到底是谁? “</p>
+</blockquote>
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog/202212251646617.png" alt="image-20221223013727776"></p>
+<blockquote>
+<p>小黑: “有了这code编码基本上是完成了80%。现在有一个问题就是授权端怎么给你提供这个code编码？”</p>
+<p>小黑: “ <code>OAuth</code>给出的方案是服务端给出一个重定向地址。让授权端回调，这个重定向地址并添加上code编码。在我们的服务端基本上达到了授权端的code编码了，这一步基本上完成。”</p>
+<p>小白: “那对应着源码的哪一段呢？”</p>
+<p>小黑: “过程其实也很简单， spring security提供了两个过滤器，一个过滤器用于重定向<code>OAuth2AuthorizationRequestRedirectFilter</code>，另一个过滤器用于登录<code>OAuth2LoginAuthenticationFilter</code>。”</p>
+<p>小黑: “相对应的就是重定向和登录两个部分, 重定向非常简单。”</p>
+<p>小黑: “从<code>application</code>的配置类上读取到从定向的URL。然后填充一下前面的<code>http://localhost:8080</code>和后面的<code>&#123;registrationId&#125;</code>。就完成重定向地址的组合了。”</p>
+</blockquote>
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog/202212251646618.png" alt="image-20221223020306807"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&#x27;&#123;baseUrl&#125;/login/oauth2/code/&#123;registrationId&#125;&#x27;</span><br><span class="line">http://localhost:8080/login/oauth2/code/gitee</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog/202212251646619.png" alt="image-20221223015446245"></p>
+<blockquote>
+<p>小黑: “从地下地址已经组合完成了，接下来组合的是<code>gitee</code>地址。拿到下面的地址。”</p>
+</blockquote>
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog/202212251646620.png" alt="image-20221223020319583"></p>
+<blockquote>
+<p>小黑: “将它组合成一个完整的地址，这些参数都是可以拿得到的。”</p>
+</blockquote>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://gitee.com/oauth/authorize?response_type=code&amp;client_id=121212121&amp;scope=user_info&amp;state=3333333%3D&amp;redirect_uri=http://localhost:8080/login/oauth2/code/gitee</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>小黑: “紧接着应该就是重定向过程。”</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">OAuth2AuthorizationRequest</span> <span class="variable">authorizationRequest</span> <span class="operator">=</span> <span class="built_in">this</span>.authorizationRequestResolver.resolve(request);</span><br><span class="line"><span class="keyword">if</span> (authorizationRequest != <span class="literal">null</span>) &#123;</span><br><span class="line">    <span class="comment">// 重定向</span></span><br><span class="line">   <span class="built_in">this</span>.sendRedirectForAuthorization(request, response, authorizationRequest);</span><br><span class="line">   <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>小黑: “从定向型还往<code>session</code>里面保存了一些数据。这段数据在获取code代码的之后就会被删除。说白了就是保存<code>OAuth2AuthorizationRequest</code>和删除<code>OAuth2AuthorizationRequest</code>，整个过程就在这里。”</p>
+</blockquote>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">HttpSessionOAuth2AuthorizationRequestRepository: </span><br><span class="line">key = org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository.AUTHORIZATION_REQUEST</span><br><span class="line">value = OAuth2AuthorizationRequest(的值)</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog/202212251646621.png" alt="image-20221223020859051"></p>
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog/202212251646622.png" alt="image-20221223020937097"></p>
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog/202212251646623.png" alt="image-20221223021021305"></p>
+<blockquote>
+<p>小黑: “到这里的话，第一是重定向的过程基本上完成了，剩下的就是用户去输入用户名密码获得<code>code</code>并组合获取<code>token</code>地址, 访问获取<code>token</code>的过程。”</p>
+</blockquote>
+<p>上面源码分析过程看的比较累, 可以直接看下图</p>
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog/202212251646630.png" alt="OAuth2创建获取code地址的过程"></p>
+<h3 id="获取code并访问获取token和用户信息地址的过程"><a href="#获取code并访问获取token和用户信息地址的过程" class="headerlink" title="获取code并访问获取token和用户信息地址的过程"></a>获取code并访问获取token和用户信息地址的过程</h3><blockquote>
+<p>说白了就是分析<code>OAuth2LoginAuthenticationFilter</code>的过程</p>
+</blockquote>
+<blockquote>
+<p>分为两个流程:</p>
+<ol>
+<li>生成: spring security生成 获取 <code>code</code> 的 <code>gitee</code> 地址</li>
+<li>获取: 登录<code>gitee</code>地址获取 <code>token</code> 的过程</li>
+</ol>
+</blockquote>
+<p>首先你登陆账户后, <code>gitee</code>会把<code>code</code>发送给你, 所以下面流程刚开始就能够从<code>request</code>中拿到 <code>code</code>, 接着就是拿着 <code>code</code> 生成一个新的获取 <code>token</code> 的<code>gitee</code>地址, 然后访问该地址获取 <code>access_token</code> 和 <code>refreshToken</code></p>
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog/202212251646631.png" alt="OAuth2获取token的过程"></p>
+<blockquote>
+<p>源码还是比较简单的, 下载下来看就行</p>
+</blockquote>
+<h2 id="自定义配置"><a href="#自定义配置" class="headerlink" title="自定义配置"></a>自定义配置</h2><h3 id="自定义ClientRegistrationRepository"><a href="#自定义ClientRegistrationRepository" class="headerlink" title="自定义ClientRegistrationRepository"></a>自定义<code>ClientRegistrationRepository</code></h3><p>我们在 <code>gitee</code> <code>app</code>上配置的回调地址如果是 <code>http://localhost:8080/callback</code>那么在本地客户端上也需要配置上这个地址 </p>
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog/202212131332754.png" alt="image-20221211200536459"></p>
+<blockquote>
+<p>记得修改地址哦, 前面我们用了<code>http://localhost:8080/login/oauth2/code/gitee</code>, 现在改成<code>http://localhost:8080/callback</code>了</p>
+<p><code>gitee</code>还能配置多个回调地址: </p>
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog/202212131332756.png" alt="image-20221211200740972"></p>
+</blockquote>
+<p>这个地址相当于我们的登录请求地址, 默认的<code>loginProcessingUrl</code>是<code>/login/oauth2/code/gitee</code></p>
+<p>默认情况下,  <code>http://localhost:8080/callback</code>请求会被当成普通请求, 只有修改<code>loginProcessingUrl</code>地址才能确保当前重定向到<code>http://localhost:8080/callback</code>地址时, 该请求会在<code>AbstractAuthenticationProcessingFilter#doFilter</code>方法中被认定为登录请求, 进而将请求交给<code>OAuth2LoginAuthenticationFilter#attemptAuthentication</code>方法去处理, 以完成登录操作.</p>
+<p>我们可以自定义<code>ClientRegistrationRepository</code>:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="keyword">public</span> SecurityFilterChain <span class="title function_">securityFilterChain</span><span class="params">(HttpSecurity http)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">   http.authorizeRequests()</span><br><span class="line">         .anyRequest().authenticated()</span><br><span class="line">         .and()</span><br><span class="line">         .oauth2Login()</span><br><span class="line">         .loginPage(<span class="string">&quot;/login&quot;</span>)</span><br><span class="line">         .loginProcessingUrl(<span class="string">&quot;/callback&quot;</span>);</span><br><span class="line">   <span class="keyword">return</span> http.build();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 自定义 ClientRegistrationRepository</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="keyword">public</span> ClientRegistrationRepository <span class="title function_">clientRegistrationRepository</span><span class="params">()</span> &#123;</span><br><span class="line">   <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">InMemoryClientRegistrationRepository</span>(giteeClientRegistration());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> ClientRegistration <span class="title function_">giteeClientRegistration</span><span class="params">()</span> &#123;</span><br><span class="line">   <span class="keyword">return</span> ClientRegistration.withRegistrationId(<span class="string">&quot;gitee&quot;</span>)</span><br><span class="line">         .clientId(<span class="string">&quot;b99c3b81431764f6402e8a7ef90d15da5ccb1c657189bf4341b03f85c781082a&quot;</span>)</span><br><span class="line">         .clientSecret(<span class="string">&quot;6176e926f9ce31d1008e8339b6d3fad1849bf3f8124c692355ec6e07efa25241&quot;</span>)</span><br><span class="line">         .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)</span><br><span class="line">         .userNameAttributeName(<span class="string">&quot;name&quot;</span>)</span><br><span class="line">         .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)</span><br><span class="line">         .redirectUri(<span class="string">&quot;http://localhost:8080/callback&quot;</span>)</span><br><span class="line">         .scope(<span class="string">&quot;user_info&quot;</span>)</span><br><span class="line">         .authorizationUri(<span class="string">&quot;https://gitee.com/oauth/authorize&quot;</span>)</span><br><span class="line">         .tokenUri(<span class="string">&quot;https://gitee.com/oauth/token&quot;</span>)</span><br><span class="line">         .userInfoUri(<span class="string">&quot;https://gitee.com/api/v5/user&quot;</span>)</span><br><span class="line">         .clientName(<span class="string">&quot;gitee&quot;</span>)</span><br><span class="line">         .build();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="自定义用户"><a href="#自定义用户" class="headerlink" title="自定义用户"></a>自定义用户</h3><p>默认情况下, spring security 读取的用户信息都是存储在<code>OAuth2User</code></p>
+<p>我们可以自定义实现一个entity</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Data</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">GiteeOAuth2User</span> <span class="keyword">implements</span> <span class="title class_">OAuth2User</span> &#123;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">private</span> List&lt;GrantedAuthority&gt; authorities = AuthorityUtils.createAuthorityList(<span class="string">&quot;ROLE_USER&quot;</span>);</span><br><span class="line">   <span class="keyword">private</span> Map&lt;String, Object&gt; attributes;</span><br><span class="line">   <span class="keyword">private</span> String id;</span><br><span class="line">   <span class="keyword">private</span> String name;</span><br><span class="line">   <span class="keyword">private</span> String login;</span><br><span class="line">   <span class="keyword">private</span> String avatarUrl;</span><br><span class="line">   <span class="keyword">private</span> String email;</span><br><span class="line"></span><br><span class="line">   <span class="meta">@Override</span></span><br><span class="line">   <span class="keyword">public</span> &lt;A&gt; A <span class="title function_">getAttribute</span><span class="params">(String name)</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> OAuth2User.<span class="built_in">super</span>.getAttribute(name);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="meta">@Override</span></span><br><span class="line">   <span class="keyword">public</span> Map&lt;String, Object&gt; <span class="title function_">getAttributes</span><span class="params">()</span> &#123;</span><br><span class="line">      <span class="keyword">if</span> (<span class="built_in">this</span>.attributes == <span class="literal">null</span>) &#123;</span><br><span class="line">         <span class="built_in">this</span>.attributes = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">         <span class="built_in">this</span>.attributes.put(<span class="string">&quot;id&quot;</span>, <span class="built_in">this</span>.getId());</span><br><span class="line">         <span class="built_in">this</span>.attributes.put(<span class="string">&quot;name&quot;</span>, <span class="built_in">this</span>.getName());</span><br><span class="line">         <span class="built_in">this</span>.attributes.put(<span class="string">&quot;login&quot;</span>, <span class="built_in">this</span>.getLogin());</span><br><span class="line">         <span class="built_in">this</span>.attributes.put(<span class="string">&quot;email&quot;</span>, <span class="built_in">this</span>.getEmail());</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> attributes;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="meta">@Override</span></span><br><span class="line">   <span class="keyword">public</span> Collection&lt;? <span class="keyword">extends</span> <span class="title class_">GrantedAuthority</span>&gt; getAuthorities() &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="built_in">this</span>.authorities;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="meta">@Override</span></span><br><span class="line">   <span class="keyword">public</span> String <span class="title function_">getName</span><span class="params">()</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="built_in">this</span>.name;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="keyword">public</span> SecurityFilterChain <span class="title function_">securityFilterChain</span><span class="params">(HttpSecurity http)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">   http.authorizeRequests()</span><br><span class="line">         .anyRequest().authenticated();</span><br><span class="line"></span><br><span class="line">   http.oauth2Login()</span><br><span class="line">         .userInfoEndpoint()</span><br><span class="line">         .customUserType(GiteeOAuth2User.class, <span class="string">&quot;gitee&quot;</span>) <span class="comment">// 已弃用的方法</span></span><br><span class="line">         .and()</span><br><span class="line">         .loginProcessingUrl(<span class="string">&quot;/callback&quot;</span>);</span><br><span class="line">   http.oauth2Client();</span><br><span class="line">   <span class="keyword">return</span> http.build();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>底层根据<code>customUserType</code>配置的<code>GiteeOAuth2User</code>, 根据类型判断到底拿那个 <code>OAuth2UserService</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">OAuth2UserService&lt;OAuth2UserRequest, OAuth2User&gt; oauth2UserService = getOAuth2UserService();</span><br><span class="line"><span class="type">OAuth2LoginAuthenticationProvider</span> <span class="variable">oauth2LoginAuthenticationProvider</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">OAuth2LoginAuthenticationProvider</span>(</span><br><span class="line">      accessTokenResponseClient, oauth2UserService);</span><br></pre></td></tr></table></figure>
+
+
+
+<p>上面的代码我们拿到的是<code>CustomUserTypesOAuth2UserService</code></p>
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog/202212131332757.png" alt="image-20221212014235335"></p>
+<p>但你会发现, 走他们的方法会存在 <code>GiteeOAuth2User.avatarUrl</code>属性是空的</p>
+<p>因为借助 <code>RestTemplate</code> 无法转换<code>avatar_url 和 avatarUrl</code></p>
+<p>我们可以自定义:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">http.oauth2Login()</span><br><span class="line">      .userInfoEndpoint(userInfoEndpointConfig -&gt; userInfoEndpointConfig.userService(userRequest -&gt; &#123;</span><br><span class="line">         <span class="type">DefaultOAuth2UserService</span> <span class="variable">defaultOAuth2UserService</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">DefaultOAuth2UserService</span>();</span><br><span class="line">         <span class="type">OAuth2User</span> <span class="variable">oAuth2User</span> <span class="operator">=</span> defaultOAuth2UserService.loadUser(userRequest);</span><br><span class="line">         Map&lt;String, Object&gt; attributes = oAuth2User.getAttributes();</span><br><span class="line">         <span class="type">String</span> <span class="variable">jsonStr</span> <span class="operator">=</span> JSONUtil.toJsonStr(attributes);</span><br><span class="line">         <span class="keyword">return</span> JSONUtil.toBean(jsonStr, GiteeOAuth2User.class);</span><br><span class="line">      &#125;))</span><br><span class="line">      .loginProcessingUrl(<span class="string">&quot;/callback&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://jsd.cdn.zzko.cn/gh/bangiao/blog_images@main/blog/202212131332758.png" alt="image-20221212014711768"></p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="mailto:undefined">Bangiao</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://bangiao.github.io/2022/12/06/02springcloud/27SpringSecurity-OAuth/">https://bangiao.github.io/2022/12/06/02springcloud/27SpringSecurity-OAuth/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E8%BF%87%E6%BB%A4%E5%99%A8/">过滤器</a><a class="post-meta__tags" href="/tags/springsecurity/">springsecurity</a><a class="post-meta__tags" href="/tags/%E8%A7%92%E8%89%B2/">角色</a><a class="post-meta__tags" href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a><a class="post-meta__tags" href="/tags/%E6%9D%83%E9%99%90/">权限</a><a class="post-meta__tags" href="/tags/%E7%94%A8%E6%88%B7/">用户</a><a class="post-meta__tags" href="/tags/%E8%B5%84%E6%BA%90/">资源</a><a class="post-meta__tags" href="/tags/OAuth/">OAuth</a><a class="post-meta__tags" href="/tags/OAuth2/">OAuth2</a><a class="post-meta__tags" href="/tags/OAuth%E8%AE%A4%E8%AF%81/">OAuth认证</a><a class="post-meta__tags" href="/tags/github%E6%8E%88%E6%9D%83%E8%AE%A4%E8%AF%81/">github授权认证</a><a class="post-meta__tags" href="/tags/gitee%E6%8E%88%E6%9D%83%E8%AE%A4%E8%AF%81/">gitee授权认证</a></div><div class="social-share pull-right" data-disabled="google,facebook"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js@1.0.16/dist/css/share.min.css"><script src="https://cdn.jsdelivr.net/npm/social-share.js@1.0.16/dist/js/social-share.min.js"></script><nav id="pagination"><div class="prev-post pull-left"><a href="/2022/12/06/02springcloud/29SpringSecurity-OAuth/"><i class="fa fa-chevron-left">  </i><span>29SpringSecurity-OAuth认证</span></a></div><div class="next-post pull-right"><a href="/2022/12/03/07kotlin/kotlin%E7%9A%84%E9%9B%86%E5%90%88%E6%93%8D%E4%BD%9C/"><span>kotlin的集合操作</span><i class="fa fa-chevron-right"></i></a></div></nav></div></div><footer><div class="layout" id="footer"><div class="copyright">&copy;2014 - 2023 By Bangiao</div><div class="framework-info"><span>Driven - </span><a target="_blank" rel="noopener" href="http://hexo.io"><span>Hexo</span></a><span class="footer-separator">|</span><span>Theme - </span><a target="_blank" rel="noopener" href="https://github.com/Molunerfinn/hexo-theme-melody"><span>Melody</span></a></div><div class="footer_custom_text">这是博客github仓库地址：<a target="_blank" rel="noopener" href="https://github.com/bangiao/bangiao.github.io">bangiao.github.io</a>，欢迎访问!</div><div class="busuanzi"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><span id="busuanzi_container_page_pv"><i class="fa fa-file-o"></i><span id="busuanzi_value_page_pv"></span><span></span></span></div></div></footer><i class="fa fa-arrow-up" id="go-up" aria-hidden="true"></i><script src="https://cdn.jsdelivr.net/npm/animejs@latest/lib/anime.min.js"></script><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-animate@latest/velocity.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-ui-pack@latest/velocity.ui.min.js"></script><script src="/js/utils.js?version=1.9.1"></script><script src="/js/fancybox.js?version=1.9.1"></script><script src="/js/sidebar.js?version=1.9.1"></script><script src="/js/copy.js?version=1.9.1"></script><script src="/js/fireworks.js?version=1.9.1"></script><script src="/js/transition.js?version=1.9.1"></script><script src="/js/scroll.js?version=1.9.1"></script><script src="/js/head.js?version=1.9.1"></script><script src="/js/search/local-search.js"></script><script>if(/Android|webOS|iPhone|iPod|iPad|BlackBerry/i.test(navigator.userAgent)) {
+  $('#nav').addClass('is-mobile')
+  $('footer').addClass('is-mobile')
+  $('#top-container').addClass('is-mobile')
+}</script><div class="search-dialog" id="local-search"><div class="search-dialog__title" id="local-search-title">Local search</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="Search for Posts"></div></div></div><hr><div id="local-search-results"><div id="local-hits"></div><div id="local-stats"><div class="local-search-stats__hr" id="hr"><span>Powered by</span> <a target="_blank" rel="noopener" href="https://github.com/wzpan/hexo-generator-search" style="color:#49B1F5;">hexo-generator-search</a></div></div></div><span class="search-close-button"><i class="fa fa-times"></i></span></div><div class="search-mask"></div></body></html>
